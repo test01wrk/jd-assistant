@@ -54,6 +54,7 @@ class Assistant(object):
         self.eid = global_config.get('config', 'eid') or DEFAULT_EID
         self.fp = global_config.get('config', 'fp') or DEFAULT_FP
         self.track_id = DEFAULT_TRACK_ID
+        self.sjkey = global_config.get('config', 'sjkey') or ''
 
         self.seckill_init_info = dict()
         self.seckill_order_data = dict()
@@ -904,6 +905,7 @@ class Assistant(object):
 
             if resp_json.get('success'):
                 logger.info('订单提交成功! 订单号：%s', resp_json.get('orderId'))
+                self.send_notification('订单提交成功', '订单提交成功! 订单号：{}'.format(resp_json.get('orderId')))
                 return True
             else:
                 message, result_code = resp_json.get('message'), resp_json.get('resultCode')
@@ -916,6 +918,7 @@ class Assistant(object):
                     message = message + '(需要在config.ini文件中配置支付密码)'
                 logger.info('订单提交失败, 错误码：%s, 返回信息：%s', result_code, message)
                 logger.info(resp_json)
+                self.send_notification('订单提交失败', '订单提交失败, 错误码：{}, 返回信息：{}'.format(result_code, message))
                 return False
         except Exception as e:
             logger.error(e)
@@ -1353,3 +1356,13 @@ class Assistant(object):
                         return
 
                 time.sleep(stock_interval)
+                
+    def send_notification(self, title, message=''):
+        try:
+            if self.sjkey.strip() and title.strip():
+                resp = requests.get('https://sc.ftqq.com/{}.send?text={}&desp={}'.format(self.sjkey, title, message))
+                if resp.ok:
+                    return True
+        except Exception as e:
+            logger.error(e)
+        return False
