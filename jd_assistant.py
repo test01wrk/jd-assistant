@@ -1312,7 +1312,7 @@ class Assistant(object):
             logger.info('执行结束，提交订单失败！')
 
     @check_login
-    def buy_item_in_stock(self, sku_ids, area, wait_all=False, stock_interval=3, submit_retry=3, submit_interval=5):
+    def buy_item_in_stock(self, sku_ids, area, wait_all=False, stock_interval=3, submit_retry=3, submit_interval=5, order_all=False):
         """根据库存自动下单商品
         :param sku_ids: 商品id。可以设置多个商品，也可以带数量，如：'1234' 或 '1234,5678' 或 '1234:2' 或 '1234:2,5678:3'
         :param area: 地区id
@@ -1320,6 +1320,7 @@ class Assistant(object):
         :param stock_interval: 查询库存时间间隔，可选参数，默认3秒
         :param submit_retry: 提交订单失败后重试次数，可选参数，默认3次
         :param submit_interval: 提交订单失败后重试时间间隔，可选参数，默认5秒
+        :param order_all: wait_all=False时，单个商品下单成功后是否继续尝试下单其他商品，可选参数，默认单个下单成功后退出
         :return:
         """
         items_dict = parse_sku_id(sku_ids)
@@ -1329,6 +1330,8 @@ class Assistant(object):
         if not wait_all:
             logger.info('下单模式：%s 任一商品有货并且未下架均会尝试下单', items_list)
             while True:
+                if len(items_dict) == 0:
+                    return
                 for (sku_id, count) in items_dict.items():
                     if not self.if_item_can_be_ordered(sku_ids={sku_id: count}, area=area_id):
                         logger.info('%s 不满足下单条件，%ss后进行下一次查询', sku_id, stock_interval)
@@ -1337,7 +1340,10 @@ class Assistant(object):
                         self._cancel_select_all_cart_item()
                         self._add_or_change_cart_item(self.get_cart_detail(), sku_id, count)
                         if self.submit_order_with_retry(submit_retry, submit_interval):
-                            return
+                            if order_all:
+                                items_dict.pop(sku_id)
+                            else:
+                                return
 
                     time.sleep(stock_interval)
         else:
