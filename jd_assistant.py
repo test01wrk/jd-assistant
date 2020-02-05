@@ -425,7 +425,12 @@ class Assistant(object):
         if not cat:
             page = self._get_item_detail_page(sku_id)
             match = re.search(r'cat: \[(.*?)\]', page.text)
-            cat = match.group(1)
+            try:
+                cat = match.group(1)
+            except Exception as e:
+                logger.info(page.text)
+                logger.error(e)
+                return False
             self.item_cat[sku_id] = cat
 
             match = re.search(r'venderId:(\d*?),', page.text)
@@ -457,9 +462,14 @@ class Assistant(object):
             raise AsstException('查询 %s 库存信息异常：%s' % (sku_id, e))
 
         resp_json = parse_json(resp.text)
-        stock_state = resp_json['stock']['StockState']  # 33 -- 现货  0,34 -- 无货  36 -- '采购中'  40 -- 可配货
-        # stock_state_name = resp_json['stock']['StockStateName']
-        return stock_state in (33, 40)
+        try:
+            stock_state = resp_json['stock']['StockState']  # 33 -- 现货  0,34 -- 无货  36 -- '采购中'  40 -- 可配货
+            # stock_state_name = resp_json['stock']['StockStateName']
+            return stock_state in (33, 36, 40)
+        except Exception as e:
+            logger.info(resp_json)
+            logger.error(e)
+            return False
 
     @check_login
     def get_multi_item_stock(self, sku_ids, area):
