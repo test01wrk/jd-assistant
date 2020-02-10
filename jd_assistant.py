@@ -285,7 +285,7 @@ class Assistant(object):
             return False
 
         resp_json = parse_json(resp.text)
-        if resp_json['code'] != 200:
+        if resp_json.get('code', 0) != 200:
             logger.info('Code: %s, Message: %s', resp_json['code'], resp_json['msg'])
             return None
         else:
@@ -463,7 +463,8 @@ class Assistant(object):
 
         resp_json = parse_json(resp.text)
         try:
-            stock_state = resp_json['stock']['StockState']  # 33 -- 现货  0,34 -- 无货  36 -- '采购中'  40 -- 可配货
+            # 33 -- 现货  0,34 -- 无货  36 -- '采购中'  40 -- 可配货
+            stock_state = resp_json.get('stock', {}).get('StockState', resp_json.get('StockState', 0))
             # stock_state_name = resp_json['stock']['StockStateName']
             return stock_state in (33, 36, 40)
         except Exception as e:
