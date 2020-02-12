@@ -8,12 +8,9 @@ class Config(object):
     def __init__(self, config_file='config.ini'):
         self._path = os.path.join(os.getcwd(), config_file)
         if not os.path.exists(self._path):
-            raise FileNotFoundError("No such file: config.ini")
+            raise FileNotFoundError("No such file: {}".format(config_file))
         self._config = configparser.ConfigParser()
         self._config.read(self._path, encoding='utf-8')
 
-    def get(self, section, name):
-        return self._config.get(section, name)
-
-
-global_config = Config()
+global_config = Config()._config
+order_config = Config(config_file='order_config.ini')._config

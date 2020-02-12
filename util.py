@@ -168,3 +168,6 @@ def check_login(func):
         return func(self, *args, **kwargs)
 
     return new_func
+
+def async_kwargs_wrapper(func, kwargs):
+    return func(**kwargs)
