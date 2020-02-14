@@ -459,7 +459,8 @@ class Assistant(object):
             logger.error('查询 %s 库存信息超时(10s)', sku_id)
             return False
         except requests.exceptions.RequestException as e:
-            raise AsstException('查询 %s 库存信息异常：%s' % (sku_id, e))
+            logger.error('查询 %s 库存信息异常：%s' % (sku_id, e))
+            return False
 
         resp_json = parse_json(resp.text)
         try:
@@ -516,7 +517,8 @@ class Assistant(object):
             logger.error('查询 %s 库存信息超时(10s)', list(items_dict.keys()))
             return False
         except requests.exceptions.RequestException as e:
-            raise AsstException('查询 %s 库存信息异常：%s' % (list(items_dict.keys()), e))
+            logger.error('查询 %s 库存信息异常：%s' % (list(items_dict.keys()), e))
+            return False
 
         resp_json = parse_json(resp.text)
         result = resp_json.get('result')
